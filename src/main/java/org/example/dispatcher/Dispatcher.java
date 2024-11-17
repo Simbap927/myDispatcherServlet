@@ -6,10 +6,11 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.function.Function;
 
 public class Dispatcher implements Runnable {
     private Socket clientSocket;
-    private HashMap<String, Runnable> commands;
+    private HashMap<String, Function<String, String>> commands;
 
     public Dispatcher() {
         this.commands = new HashMap<>();
@@ -18,8 +19,9 @@ public class Dispatcher implements Runnable {
     public void setClientSocket(Socket clientSocket) {
         this.clientSocket = clientSocket;
     }
-    public void putCommand(String command, Runnable runnable) {
-        commands.put(command, runnable);
+
+    public void putCommand(String command, Function<String, String> function) {
+        commands.put(command.toLowerCase(), function);
     }
 
     @Override
@@ -39,11 +41,13 @@ public class Dispatcher implements Runnable {
                     break;
                 }
 
-                Runnable command = commands.get(inputLine.toLowerCase());
+                Function<String, String> command = commands.get(inputLine.toLowerCase());
                 if (command != null) {
-                    command.run();
-                } else
+                    String response = command.apply(inputLine);
+                    out.println(response);
+                } else {
                     out.println("Unknown command: " + inputLine);
+                }
             }
         } catch (IOException e) {
             System.err.println("Error handling client: " + e.getMessage());
@@ -54,27 +58,6 @@ public class Dispatcher implements Runnable {
             } catch (IOException e) {
                 System.err.println("Error closing client socket: " + e.getMessage());
             }
-        }
-    }
-
-    public void sendCurrentTime() {
-        String currentTime = java.time.LocalTime.now().toString();
-        sendResponse("Current time: " + currentTime);
-    }
-    public void sendCurrentDate() {
-        String currentDate = java.time.LocalDate.now().toString();
-        sendResponse("Current date: " + currentDate);
-    }
-    public void sendHello() {
-        sendResponse("Hello! How can I help you?");
-    }
-
-    private void sendResponse(String message) {
-        try {
-            PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-            out.println(message);
-        } catch (IOException e) {
-            System.err.println("Error sending response: " + e.getMessage());
         }
     }
 }
