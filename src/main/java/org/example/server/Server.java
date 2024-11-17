@@ -25,6 +25,7 @@ public class Server {
             this.dispatcher.putCommand(entry.getKey(), entry.getValue());
         });
     }
+
     public void start() {
         System.out.println("Starting server on port: " + port);
         try (ServerSocket serverSocket = new ServerSocket(port)) {
@@ -53,7 +54,6 @@ public class Server {
                     break;
                 }
 
-                // Dispatcher를 통해 요청 처리
                 String response = dispatcher.handleRequest(inputLine);
                 out.println(response);
             }
